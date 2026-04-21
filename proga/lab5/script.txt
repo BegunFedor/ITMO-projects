@@ -1,0 +1,65 @@
+info
+help
+add
+Math Study Group
+10
+20
+30
+FULL_TIME_EDUCATION
+THIRD
+Begun Fedor
+2006
+17
+04
+60
+BROWN
+USA
+add
+StudyGroup2
+30
+40
+60
+DISTANCE_EDUCATION
+FIFTH
+Admin2
+80
+BROWN
+VATICAN
+show
+filter_greater_than_group_admin Admin1
+add_if_min
+StudyGroupMin
+5
+10
+5
+DISTANCE_EDUCATION
+EIGHTH
+MiniAdmin
+45
+BLACK
+VATICAN
+remove_greater
+StudyGroup2
+30
+40
+60
+DISTANCE_EDUCATION
+FIFTH
+Admin2
+80
+BROWN
+VATICAN
+remove_all_by_group_admin Admin1
+print_field_descending_semester_enum
+update 3
+StudyGroupUpdated
+15
+25
+55
+EVENING_CLASSES
+EIGHTH
+NewAdmin
+75
+BLACK
+NORTH_KOREA
+exit

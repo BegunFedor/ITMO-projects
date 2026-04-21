@@ -1,0 +1,62 @@
+{
+  "1": {
+    "id": 1,
+    "name": "Math Study Group",
+    "coordinates": { "x": -100, "y": 20 },
+    "creationDate": "2024-03-10 12:00:00",
+    "studentsCount": 30,
+    "formOfEducation": "FULL_TIME_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "Alice Johnson",
+      "birthday": {
+        "year": 1990,
+        "month": 1,
+        "day": 1
+      },
+      "weight": 65.5,
+      "eyeColor": "BROWN",
+      "nationality": "USA"
+    }
+  },
+  "2": {
+    "id": 2,
+    "name": "Kik Study Group",
+    "coordinates": { "x": 10, "y": 20 },
+    "creationDate": "2024-03-10 12:00:00",
+    "studentsCount": 30,
+    "formOfEducation": "FULL_TIME_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "Bob Alex",
+      "birthday": {
+        "year": 200,
+        "month": 1,
+        "day": 1
+      },
+      "weight": 200.5,
+      "eyeColor": "BROWN",
+      "nationality": "USA"
+    }
+  },
+  "3": {
+    "id": 3,
+    "name": "Prog Study Group",
+    "coordinates": { "x": 4, "y": 90 },
+    "creationDate": "2028-03-10 12:00:00",
+    "studentsCount": 30,
+    "formOfEducation": "FULL_TIME_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "John John",
+      "birthday": {
+        "year": 2000,
+        "month": 3,
+        "day": 5
+      },
+      "weight": 90.5,
+      "eyeColor": "BROWN",
+      "nationality": "USA"
+    }
+  }
+}

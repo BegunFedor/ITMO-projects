@@ -1,0 +1,38 @@
+{
+  "2": {
+    "id": 2,
+    "name": "Kik Study Group",
+    "coordinates": {
+      "x": 10,
+      "y": 20
+    },
+    "studentsCount": 30,
+    "formOfEducation": "FULL_TIME_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "Bob Alex",
+      "birthday": {},
+      "weight": 200.5,
+      "eyeColor": "BROWN",
+      "nationality": "USA"
+    }
+  },
+  "3": {
+    "id": 3,
+    "name": "Prog Study Group",
+    "coordinates": {
+      "x": 4,
+      "y": 90
+    },
+    "studentsCount": 30,
+    "formOfEducation": "FULL_TIME_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "John John",
+      "birthday": {},
+      "weight": 90.5,
+      "eyeColor": "BROWN",
+      "nationality": "USA"
+    }
+  }
+}
