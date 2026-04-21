@@ -1,0 +1,167 @@
+/* Палитра вокруг #BC8F8F */
+:root{
+  --bg: #F5EFEF;
+  --primary: #BC8F8F;       /* rosy brown */
+  --primary-dark: #9C7373;  /* темнее */
+  --primary-light:#D9B8B8;  /* светлее */
+  --ink:#2b2b2b;
+  --muted:#6b6464;
+  --card:#ffffff;
+  --border:#e8dede;
+  --shadow: 0 10px 30px rgba(188,143,143,.15), 0 5px 15px rgba(156,115,115,.08);
+}
+
+body{
+  font-family:'Arial Rounded MT Bold','Arial',sans-serif;
+  margin:0; padding:20px; min-height:100vh;
+  color:var(--ink);
+  background: var(--bg);
+}
+
+/* Главный контейнер */
+.main-container{
+  width:100%;
+  background:var(--card);
+  border-radius:20px;
+  box-shadow: var(--shadow);
+  transition:transform .3s ease, box-shadow .3s ease;
+  overflow:hidden;
+}
+.main-container:hover{ transform:scale(1.003); box-shadow:0 15px 40px rgba(156,115,115,.20) }
+
+/* Grid */
+.main-container.grid{
+  display:grid;
+  grid-template-columns: 40% 60%;
+  grid-template-rows: auto auto 1fr;
+}
+.main-container .header{ grid-column:1 / -1 }
+.main-container .form-section{ grid-column:1 / 2 }
+.main-container .image-section{ grid-column:2 / 3 }
+.main-container .rtd{ grid-column:1 / -1 }
+@media (max-width:900px){
+  .main-container.grid{ grid-template-columns:1fr }
+  .main-container .form-section,
+  .main-container .image-section,
+  .main-container .rtd{ grid-column:1 / -1 }
+}
+
+.header{
+  font-family:"Times New Roman",serif;
+  font-size:28px; color:#fff; text-align:center; padding:24px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary), var(--primary-dark));
+  text-shadow: 2px 2px 4px rgba(0,0,0,.15);
+}
+
+/* Форма */
+.form-section{ padding:28px }
+.form-table{ width:100% }
+.form-title{
+  text-align:center; font-weight:bold; padding:14px; margin-bottom:18px;
+  color:var(--primary-dark);
+  background: linear-gradient(135deg, #F4E7E7 0%, #EEDADA 100%);
+  border-radius:14px; box-shadow:0 4px 10px rgba(188,143,143,.12);
+}
+.label-cell{ text-align:center; width:38%; font-weight:bold; color:var(--primary-dark) }
+.input-cell{ padding:12px; width:62% }
+
+input[type="text"], select{
+  width: 70%;
+  padding: 1.2% 2%;
+  border:2px solid #E8D0D0;
+  border-radius:12px;
+  background:rgba(255,255,255,.95);
+  transition: all .25s ease;
+  font-size:16px; color:#5a3f3f;
+}
+input[type="text"]::placeholder{ color:#c3a4a4 }
+input[type="text"]:hover{ border-color: var(--primary) }
+input[type="text"]:focus, select:focus{
+  border-color: var(--primary-dark); outline:none; transform: translateY(-1px);
+}
+
+.x-grid{
+  display:grid;
+  grid-template-columns: repeat(5, max-content);
+  gap: 8px 10px;
+  align-items:center;
+}
+.x-grid .break{ grid-column: 1 / -1; height:0 }
+
+.xbtn{ position:relative; display:inline-flex }
+.xbtn input{ position:absolute; inset:0; opacity:0; }
+.xbtn span{
+  display:inline-block; padding:8px 14px; border-radius:999px;
+  border:1px solid var(--border); background:#fff; color:#5a3f3f;
+  box-shadow:0 3px 8px rgba(188,143,143,.08); cursor:pointer; transition:.2s;
+}
+.xbtn:hover span{ border-color: var(--primary) }
+.xbtn input:checked + span{
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-color: transparent; color:#fff; font-weight:700;
+  box-shadow: 0 6px 16px rgba(188,143,143,.35);
+}
+
+/* Кнопка */
+.button-cell{ padding:20px; text-align:center }
+.submit-button{
+  padding:14px 28px; border:none; border-radius:24px; cursor:pointer; font-weight:bold; font-size:16px;
+  display:inline-flex; align-items:center; gap:6px; position:relative; overflow:hidden;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary), var(--primary-dark)); color:#fff;
+  box-shadow:0 4px 15px rgba(188,143,143,.30); transition: all .3s ease;
+}
+.submit-button::before{
+  content:""; position:absolute; inset:0; left:-100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transition:left .5s ease;
+}
+.submit-button:hover::before{ left:100% }
+.submit-button:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(156,115,115,.35) }
+.submit-button:active{ transform:translateY(0) }
+.button-icon{ font-size:18px; position:relative; top:1px }
+
+.image-section{ padding:28px; background:#F7F0F0; border-left:2px dashed #E8D0D0 }
+.graph-title{ text-align:center; font-weight:bold; margin-bottom:16px; color:var(--primary-dark); font-size:18px }
+.graph-container{
+  padding:10px; background:#fff; border:2px dashed #E8D0D0; border-radius:14px; color:#5a3f3f;
+  box-shadow:0 4px 8px rgba(0,0,0,.06); transition: all .25s ease;
+}
+.graph-container:hover{ border-color: var(--primary); box-shadow:0 6px 18px rgba(156,115,115,.15) }
+#graph-canvas{ display:block; margin:0 auto; height:420px }
+
+/* История */
+.rtd{ display:block; max-height:300px; overflow-y:auto; width:100%; border:1px solid #E8D0D0 }
+.results-table{ width:100%; border-collapse:collapse }
+.results-table thead{ position:sticky; top:0; z-index:10 }
+.results-table th{
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color:#fff; padding:14px; text-align:center; font-weight:bold;
+  text-shadow:1px 1px 2px rgba(0,0,0,.12);
+}
+.results-table td{ padding:12px; text-align:center; font-size:16px; color:#5a3f3f; font-style:italic }
+.no-data{ text-align:center; color:#b99797; font-style:italic; padding:26px }
+
+/* Модалка */
+.modal{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.35) }
+.modal-content{
+  background:#fff; margin:15% auto; padding:26px; width:80%; max-width:400px; border:2px solid var(--primary);
+  border-radius:12px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,.2); position:relative
+}
+.close{ position:absolute; right:14px; top:10px; font-size:26px; font-weight:bold; color:#8d8d8d; cursor:pointer }
+.close:hover{ color: var(--primary-dark) }
+#modalMessage{ margin:20px 0; font-size:18px; color:#333; line-height:1.5; font-weight:500 }
+#modalOkBtn{
+  display:block; margin:18px auto 0; padding:12px 26px; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;
+  color:#fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); transition: all .25s ease
+}
+#modalOkBtn:hover{ transform:translateY(-1px); box-shadow:0 4px 12px rgba(188,143,143,.35) }
+
+/* Плавное появление */
+@keyframes fadeInUp{ from{opacity:0; transform:translateY(30px)} to{opacity:1; transform:translateY(0)} }
+.main-container{ animation: fadeInUp .7s ease-out }
+.form-table tr{ animation: fadeInUp .5s ease-out backwards }
+.form-table tr:nth-child(1){ animation-delay:.1s }
+.form-table tr:nth-child(2){ animation-delay:.2s }
+.form-table tr:nth-child(3){ animation-delay:.3s }
+.form-table tr:nth-child(4){ animation-delay:.4s }
+.form-table tr:nth-child(5){ animation-delay:.5s }

@@ -1,0 +1,8 @@
+javaweb/points/PointBean.class
+javaweb/AreaCheckServlet.class
+javaweb/filters/TimeZoneFilter.class
+javaweb/stats/StatsServlet.class
+javaweb/stats/StatsBean.class
+javaweb/points/Point.class
+javaweb/ControllerServlet.class
+javaweb/validation/InputValidator.class
