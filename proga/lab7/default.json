@@ -1,0 +1,36 @@
+{
+  "1": {
+    "id": 1,
+    "name": "Group A",
+    "coordinates": {
+      "x": 100,
+      "y": 200
+    },
+    "studentsCount": 25,
+    "formOfEducation": "DISTANCE_EDUCATION",
+    "semesterEnum": "THIRD",
+    "groupAdmin": {
+      "name": "Alice",
+      "weight": 60.0,
+      "eyeColor": "BLUE",
+      "nationality": "USA"
+    }
+  },
+  "2": {
+    "id": 2,
+    "name": "math",
+    "coordinates": {
+      "x": 20,
+      "y": 30
+    },
+    "studentsCount": 12,
+    "formOfEducation": "DISTANCE_EDUCATION",
+    "semesterEnum": "SECOND",
+    "groupAdmin": {
+      "name": "Henry",
+      "weight": 45.0,
+      "eyeColor": "BLUE",
+      "nationality": "USA"
+    }
+  }
+}

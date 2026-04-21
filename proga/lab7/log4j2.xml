@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <!-- Вывод в консоль -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%-5level] %msg%n" />
+        </Console>
+        <!-- Вывод в файл -->
+        <File name="File" fileName="logs/server.log">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%-5level] %msg%n" />
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <!-- Главный логгер -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>
