@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Главная страница</title>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+
+<h:body>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="modalCloseBtn">&times;</span>
+            <p id="modalMessage">Сообщение по умолчанию</p>
+            <button id="modalOkBtn">OK</button>
+        </div>
+    </div>
+
+    <h:form id="mainForm">
+        <table class="main-container">
+            <tr>
+                <td colspan="2">
+
+                    <div class="header">
+                        <h:commandLink value="←" action="start" styleClass="backLink">
+                            <f:ajax disabled="true"/>
+                        </h:commandLink>
+
+
+                        Бегун Федор , P3219, Вариант 9383
+                    </div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td class="form-section">
+                    <table class="form-table">
+                        <tr>
+                            <td colspan="2" class="form-title">
+                                Введите параметры:
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label-cell">
+                                <h:outputLabel value="X координата:" for="x-input"/>
+                            </td>
+                            <td class="input-cell">
+                                <p:selectOneMenu id="x-input" value="#{pointBean.x}" style="width:80px">
+                                    <f:selectItem itemValue="-3" itemLabel="-3"/>
+                                    <f:selectItem itemValue="-2" itemLabel="-2"/>
+                                    <f:selectItem itemValue="-1" itemLabel="-1"/>
+                                    <f:selectItem itemValue="0"  itemLabel="0"/>
+                                    <f:selectItem itemValue="1"  itemLabel="1"/>
+                                    <f:selectItem itemValue="2"  itemLabel="2"/>
+                                    <f:selectItem itemValue="3"  itemLabel="3"/>
+                                    <f:selectItem itemValue="4"  itemLabel="4"/>
+                                    <f:selectItem itemValue="5"  itemLabel="5"/>
+                                </p:selectOneMenu>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label-cell">
+                                <h:outputLabel value="Y координата:"/>
+                            </td>
+                            <td class="input-cell">
+                                <h:inputText id="y-input" value="#{pointBean.y}"
+                                             placeholder="От -5 до 5"/>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label-cell">
+                                <h:outputLabel value="Радиус R:"/>
+                            </td>
+                            <td class="input-cell">
+                                <div class="r-links">
+                                    <h:commandLink value="1" styleClass="r-link" action="#{pointBean.setR(1)}">
+                                        <f:ajax execute="@this"/>
+                                    </h:commandLink>
+                                    <h:commandLink value="1.5" styleClass="r-link" action="#{pointBean.setR(1.5)}">
+                                        <f:ajax execute="@this"/>
+                                    </h:commandLink>
+                                    <h:commandLink value="2" styleClass="r-link" action="#{pointBean.setR(2)}">
+                                        <f:ajax execute="@this"/>
+                                    </h:commandLink>
+                                    <h:commandLink value="2.5" styleClass="r-link" action="#{pointBean.setR(2.5)}">
+                                        <f:ajax execute="@this"/>
+                                    </h:commandLink>
+                                    <h:commandLink value="3" styleClass="r-link" action="#{pointBean.setR(3)}">
+                                        <f:ajax execute="@this"/>
+                                    </h:commandLink>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label-cell">
+                                <h:outputLabel value="Тип точки:"/>
+                            </td>
+                            <td class="input-cell">
+                                <p:selectOneMenu value="#{pointBean.pointType}" style="width:120px">
+                                    <f:ajax event="change" update="typeFields"/>
+                                    <f:selectItem itemValue="SPIDER" itemLabel="Паук"/>
+                                    <f:selectItem itemValue="ANT" itemLabel="Муравей"/>
+                                </p:selectOneMenu>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2">
+                                <h:panelGroup id="typeFields" layout="block">
+                                    <h:panelGroup rendered="#{pointBean.pointType eq 'SPIDER'}" layout="block">
+                                        <div class="dynamic-row">
+                                            <span class="label-cell">Количество лап:</span>
+                                            <span class="input-cell">
+                        <h:inputText value="#{pointBean.logsQuantity}" style="width:120px"/>
+                    </span>
+                                        </div>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{pointBean.pointType eq 'ANT'}" layout="block">
+                                        <div class="dynamic-row">
+                                            <span class="label-cell">Цвет тела:</span>
+                                            <span class="input-cell">
+                        <p:selectOneMenu value="#{pointBean.bodyColor}" style="width:120px">
+                            <f:selectItem itemValue="red" itemLabel="Красный"/>
+                            <f:selectItem itemValue="black" itemLabel="Чёрный"/>
+                            <f:selectItem itemValue="brown" itemLabel="Коричневый"/>
+                            <f:selectItem itemValue="green" itemLabel="Зелёный"/>
+                        </p:selectOneMenu>
+                    </span>
+                                        </div>
+                                    </h:panelGroup>
+
+                                </h:panelGroup>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td colspan="2" class="button-cell">
+                                <h:commandButton value="Проверить попадание"
+                                                 action="#{pointBean.checkPoint}"
+                                                 styleClass="submit-button"
+                                                 id="submit-button">
+                                    <f:ajax execute="mainForm" render="results-table"/>                                </h:commandButton>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <td class="image-section">
+                    <div class="graph-title">Область попадания:</div>
+                    <div class="graph-container">
+                        <canvas id="graph-canvas" width="400" height="400"/>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2">
+                    <div class="rtd">
+                        <h:dataTable id="results-table" value="#{resultsBean.allPoints}" var="point"
+                                     styleClass="results-table"
+                                     headerClass="results-header"
+                                     rowClasses="results-row-odd,results-row-even">
+                            <h:column>
+                                <f:facet name="header">Тип</f:facet>
+                                #{point.type}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">Характеристика</f:facet>
+                                #{point.extra}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">X</f:facet>
+                                #{point.x}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">Y</f:facet>
+                                #{point.y}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">R</f:facet>
+                                #{point.r}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">Результат</f:facet>
+                                #{point.hit ? 'Попал' : 'Промазал'}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">Время</f:facet>
+                                #{resultsBean.formatTime(point.timestamp)}
+                            </h:column>
+
+                            <h:column>
+                                <f:facet name="header">Время работы (мс)</f:facet>
+                                #{resultsBean.formatExecutionTime(point.executionTime)}
+                            </h:column>
+                        </h:dataTable>
+
+                        <h:panelGroup rendered="#{empty resultsBean.allPoints}">
+                            <table class="results-table">
+
+                            </table>
+                        </h:panelGroup>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </h:form>
+
+    <h:outputScript library="js" name="script.js"/>
+    <h:outputScript library="jakarta.faces" name="faces.js"/>
+
+</h:body>
+</html>

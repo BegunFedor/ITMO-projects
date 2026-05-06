@@ -1,0 +1,250 @@
+<project name="lab3" default="build">
+
+
+    <property file="build.properties"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="copy-resources">
+        <mkdir dir="${classes.dir}"/>
+
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false" source="17" target="17">
+            <classpath>
+                <fileset dir="lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="build" depends="compile, war">
+        <mkdir dir="${jar.dir}"/>
+
+        <jar destfile="${jar.dir}/${jar.name}" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main.class}"/>
+                <attribute name="Version" value="1.0"/>
+            </manifest>
+        </jar>
+    </target>
+
+
+    <target name="test" depends="build">
+        <echo message="***** TEST STARTED *****"/>
+        <mkdir dir="${test.classes.dir}"/>
+        <mkdir dir="${junit.report.dir}"/>
+
+        <javac destdir="${test.classes.dir}" srcdir="${test.dir}" includeantruntime="false" encoding="utf-8">
+            <classpath>
+                <pathelement path="${classes.dir}"/>
+                <pathelement path="${test.classes.dir}"/>
+                <fileset dir="lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+
+        <junit printsummary="yes" haltonfailure="true" haltonerror="true" fork="true">
+            <classpath>
+                <pathelement path="${classes.dir}"/>
+
+                <pathelement path="${test.classes.dir}"/>
+
+                <fileset dir="lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+
+            <formatter type="plain"/>
+            <formatter type="xml"/>
+
+            <batchtest todir="${junit.report.dir}">
+                <fileset dir="${test.classes.dir}" includes="**/*Test.class"/>
+            </batchtest>
+        </junit>
+        <echo message="***** TEST COMPLETED *****"/>
+    </target>
+
+
+    <target name="doc" depends="build">
+
+        <mkdir dir="${build.dir}/doc"/>
+        <javadoc sourcepath="${src.dir}" destdir="${build.dir}/doc">
+            <classpath>
+                <fileset dir="lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javadoc>
+
+        <checksum file="${jar.dir}/${jar.name}" algorithm="MD5" property="md5.value"/>
+
+        <checksum file="${jar.dir}/${jar.name}" algorithm="SHA-1" property="sha1.value"/>
+
+        <jar destfile="${jar.dir}/${jar.name}" update="true">
+            <manifest>
+                <attribute name="MD5" value="${md5.value}"/>
+                <attribute name="SHA-1" value="${sha1.value}"/>
+            </manifest>
+        </jar>
+
+        <jar destfile="${jar.dir}/${jar.name}" update="true">
+            <fileset dir="${build.dir}/doc"/>
+        </jar>
+
+    </target>
+
+    <target name="copy-resources">
+        <mkdir dir="${classes.dir}/META-INF"/>
+
+        <copy todir="${classes.dir}/META-INF">
+            <fileset dir="src/main/resources/META-INF">
+                <include name="persistence.xml"/>
+            </fileset>
+        </copy>
+    </target>
+
+
+
+
+
+    <target name="scp" depends="build">
+
+        <echo message="Проверяем наличие JAR..."/>
+
+        <available file="${jar.dir}/${jar.name}" property="jar.exists"/>
+        <fail unless="jar.exists" message="JAR file not found in ${jar.dir}!"/>
+
+        <echo message="Отправка ${jar.name} на сервер..."/>
+
+        <scp file="${jar.dir}/${jar.name}"
+             todir="${scp.user}@${scp.host}:${scp.remote.dir}"
+             port="${scp.port}"
+             password="${scp.password}"
+             trust="true"/>
+
+        <echo message="Файл успешно отправлен"/>
+    </target>
+
+
+    <target name="env" depends="war">
+        <echo message="Запуск WildFly..."/>
+
+        <exec executable="${wildfly.home}/bin/standalone.sh" spawn="true"/>
+
+        <echo message="Ждем запуск сервера..."/>
+        <sleep seconds="10"/>
+
+        <echo message="Деплой WAR в WildFly"/>
+
+        <mkdir dir="${deploy.dir}"/>
+        <copy file="${build.dir}/ROOT.war" todir="${deploy.dir}"/>
+
+        <echo message="Приложение задеплоено"/>
+    </target>
+
+    <target name="history">
+        <echo message="Запуск history проверки (SVN)"/>
+
+        <exec executable="bash">
+            <arg value="-c"/>
+            <arg value='
+if ! svn info > /dev/null 2&gt;&amp;1; then
+    echo "SVN не инициализирован";
+    exit 0;
+fi;
+
+echo "Начинаем поиск рабочей ревизии...";
+
+REV=$(svn info | grep Revision | awk "{print \$2}");
+
+while [ -n "$REV" ] &amp;&amp; [ $REV -gt 0 ]; do
+    echo "Пробуем ревизию $REV";
+
+    svn update -r $REV;
+
+    ant compile > compile.log 2&gt;&amp;1;
+
+    if [ $? -eq 0 ]; then
+        echo "Найдена рабочая ревизия: $REV";
+
+        NEXT=$((REV+1));
+
+        echo "Формируем diff между $REV и $NEXT";
+        svn diff -r $REV:$NEXT > diff.txt;
+
+        exit 0;
+    fi;
+
+    REV=$((REV-1));
+done;
+
+echo "Рабочая ревизия не найдена";
+'/>
+        </exec>
+    </target>
+
+    <target name="war" depends="compile">
+        <mkdir dir="${build.dir}/war"/>
+
+        <war destfile="${build.dir}/ROOT.war" webxml="src/main/webapp/WEB-INF/web.xml">
+
+            <fileset dir="src/main/webapp"/>
+
+            <classes dir="${classes.dir}"/>
+
+            <lib dir="lib"/>
+
+        </war>
+    </target>
+
+    <target name="stop">
+        <echo>Останавливаем WildFly...</echo>
+
+        <exec executable="sh">
+            <arg value="-c"/>
+            <arg value="pkill -f wildfly || true"/>
+        </exec>
+
+        <exec executable="sh">
+            <arg value="-c"/>
+            <arg value="pkill -f jboss-modules.jar || true"/>
+        </exec>
+
+        <echo>WildFly остановлен</echo>
+    </target>
+
+
+    <target name="gf" depends="war">
+
+        <echo message="Отправка WAR на helios..."/>
+
+        <exec executable="scp">
+            <arg value="-P"/>
+            <arg value="${scp.port}"/>
+            <arg value="${build.dir}/ROOT.war"/>
+            <arg value="${scp.user}@${scp.host}:${scp.remote.dir}/ROOT.war"/>
+        </exec>
+
+        <echo message="Деплой в GlassFish..."/>
+
+        <exec executable="ssh">
+            <arg value="-p"/>
+            <arg value="${scp.port}"/>
+            <arg value="${scp.user}@${scp.host}"/>
+            <arg value="bash"/>
+            <arg value="-c"/>
+            <arg value="
+            '${glassfish.home}/bin/asadmin undeploy ROOT || true;
+             ${glassfish.home}/bin/asadmin deploy --force=true ${scp.remote.dir}/ROOT.war'
+    "/>
+        </exec>
+
+        <echo message="Деплой завершён"/>
+
+    </target>
+
+
+</project>
