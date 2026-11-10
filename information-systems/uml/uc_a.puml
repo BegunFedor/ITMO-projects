@@ -1,0 +1,22 @@
+@startuml
+!include common.iuml
+left to right direction
+actor "Житель" as R
+rectangle "ИС обработки обращений жителей МКД" {
+  usecase "П1. Создать обращение" as UC1
+  usecase "Прикрепить материалы" as UC1a
+  usecase "Отслеживать обращение\nи оставлять комментарии" as UC2
+  usecase "П4. Оценить работу /\nвернуть на доработку" as UC5
+  usecase "П5. Передать показания\nприборов учёта" as UC6
+  usecase "Просматривать объявления" as UC7a
+  usecase "П7. Подать жалобу в ГЖИ" as UC8
+}
+R --> UC1
+UC1 <.. UC1a : <<extend>>
+R --> UC2
+R --> UC5
+R --> UC6
+R --> UC7a
+R --> UC8
+UC8 <.. UC5 : <<extend>>\n(оценка 1–2)
+@enduml

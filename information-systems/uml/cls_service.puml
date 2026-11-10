@@ -1,0 +1,100 @@
+@startuml
+!include common.iuml
+skinparam classAttributeIconSize 0
+hide empty members
+left to right direction
+package "service" {
+class AuthService {
+  +authenticate(LoginRequest) : UserDto
+  +profile(CurrentUser) : UserDto
+}
+class RegistrationService {
+  +register(RegistrationRequest) : UserDto
+}
+class ResidentConfirmationService {
+  +pending(admin) : List<PendingResidentDto>
+  +confirm(admin, ConfirmResidentRequest)
+}
+class RequestQueryService {
+  +residentRequests(user)
+  +companyRequests(admin, statuses)
+  +executorTasks(employee)
+  +card(user, id) : RequestCardDto
+}
+class ResidentRequestService {
+  +create(user, CreateRequestDto) : Long
+  +cancel(user, id, reason)
+  +rate(user, id, RateDto)
+  +rejectResult(user, id, reason)
+}
+class DispatchService {
+  +suggestExecutors(admin, id)
+  +accept(admin, id)
+  +assign(admin, id, AssignDto)
+  +cancel(admin, id, reason)
+}
+class WorkService {
+  +start(employee, id)
+  +complete(employee, id, result)
+}
+class CommentService {
+  +add(user, id, body) : Long
+}
+class MeterService {
+  +residentMeters(user) : List<MeterDto>
+  +submitReading(user, meter, value)
+}
+class AnnouncementService {
+  +residentFeed(user)
+  +companyAnnouncements(admin)
+  +publish(admin, dto) : Long
+}
+class ComplaintService {
+  +file(user, dto) : Long
+  +residentComplaints(user)
+  +districtComplaints(inspector)
+  +reject(inspector, id, reason)
+}
+class InspectionService {
+  +overdueRequests(inspector)
+  +orders(inspector)
+  +issue(inspector, IssueOrderDto) : Long
+  +review(inspector, id, ReviewOrderDto)
+}
+class OrderReportService {
+  +companyOrders(admin)
+  +submitReport(admin, id, report)
+}
+class NotificationService {
+  +latest(user)
+  +unreadCount(user)
+  +markAllRead(user)
+}
+class DeadlineScheduler {
+  +markOverdue() <<@Scheduled>>
+  +closeUnrated() <<@Scheduled>>
+}
+package access {
+class StaffScope {
+  +companyOf(user) : Long
+  +districtOf(user) : Long
+}
+class RequestAccessPolicy {
+  +checkCanView(user, request)
+  +checkCompanyStaff(user, request)
+}
+class RequestActionPolicy {
+  +actionsFor(user, request, rating,\n hasComplaint, history) : Set<RequestAction>
+}
+}
+}
+RequestQueryService --> RequestAccessPolicy
+RequestQueryService --> RequestActionPolicy
+DispatchService --> RequestQueryService
+DispatchService --> RequestAccessPolicy
+RequestAccessPolicy --> StaffScope
+AnnouncementService --> StaffScope
+ComplaintService --> StaffScope
+OrderReportService --> StaffScope
+ResidentConfirmationService --> StaffScope
+@enduml

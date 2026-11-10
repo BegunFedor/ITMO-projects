@@ -1,0 +1,6 @@
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Liberation Serif"
+skinparam defaultFontSize 14
+skinparam dpi 200
+skinparam backgroundColor white

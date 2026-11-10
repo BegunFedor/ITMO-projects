@@ -1,0 +1,18 @@
+@startuml
+!include common.iuml
+node "Компьютер разработчика" as DEV {
+  artifact "исходный код" as SRC
+  artifact "mkd-requests.jar" as JAR1
+}
+node "Браузер" as BR
+node "helios.cs.ifmo.ru" as H {
+  artifact "mkd-requests.jar (встроенный Tomcat)\njava -jar mkd-requests.jar\nPORT=<порт>" as JAR2
+}
+node "pg" as PG {
+  database "PostgreSQL (studs)"
+}
+SRC --> JAR1 : Maven: сборка фронтенда\n(npm run build) и бэкенда
+JAR1 --> JAR2 : scp
+BR --> H : SSH-туннель\nlocalhost:8080 → helios:<порт>
+JAR2 --> PG : JDBC :5432
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+!include common.iuml
+skinparam componentStyle rectangle
+node "Браузер пользователя" {
+  [SPA на React + TypeScript\n(MUI, React Query)] as SPA
+}
+node "helios" {
+  node "JVM: Spring Boot приложение (исполняемый JAR)" {
+    [Встроенный веб-сервер Apache Tomcat] as WS
+    [Статические файлы SPA] as ST
+    [Аутентификация и роли\n(сессия, AuthInterceptor)] as SEC
+    [Уровень представления\nREST-контроллеры /api/**, DTO] as C
+    [Уровень бизнес-логики\nсервисы прецедентов, политики доступа] as S
+    [Планировщик\n(@Scheduled: контроль сроков)] as SCH
+    [Уровень хранения\nJPA-репозитории (чтение),\nвызов PL/pgSQL (изменения)] as R
+  }
+}
+node "pg (сервер БД кафедры)" {
+  database "PostgreSQL\nтаблицы, триггеры,\nPL/pgSQL-функции" as DB
+}
+SPA --> WS : HTTP: загрузка SPA,\nзапросы /api/** (JSON)
+WS --> ST
+WS --> SEC
+SEC --> C
+C --> S
+SCH --> S
+S --> R
+R --> DB : JDBC
+@enduml

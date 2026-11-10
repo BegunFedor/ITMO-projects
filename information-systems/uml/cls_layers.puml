@@ -1,0 +1,55 @@
+@startuml
+!include common.iuml
+skinparam packageStyle rectangle
+hide empty members
+package "ru.itmo.mkd.web" as web {
+  class "…Controller" as ctl
+}
+package "ru.itmo.mkd.security" as sec {
+  class AuthInterceptor
+  class SessionAuthentication
+}
+package "ru.itmo.mkd.dto / mapper" as dto {
+  class "…Dto (record)" as dtos
+  class "…Mapper (MapStruct)" as maps
+}
+package "ru.itmo.mkd.service" as svc {
+  class "…Service" as srv
+  package "access" {
+    class StaffScope
+    class RequestAccessPolicy
+    class RequestActionPolicy
+  }
+  class DeadlineScheduler
+}
+package "ru.itmo.mkd.repository" as repo {
+  interface "…Repository\n(Spring Data JPA)" as rp
+}
+package "ru.itmo.mkd.procedure" as proc {
+  class "…Procedures" as prs
+  class ProcedureExecutor
+}
+package "ru.itmo.mkd.entity" as ent {
+  class "@Entity\n(только чтение)" as e
+}
+package "ru.itmo.mkd.exception" as exc {
+  class GlobalExceptionHandler
+  class DatabaseErrorTranslator
+  class ApiException
+}
+ctl ..> srv
+ctl ..> dtos
+AuthInterceptor ..> SessionAuthentication
+srv ..> maps
+srv ..> rp
+srv ..> prs
+srv ..> StaffScope
+maps ..> e
+maps ..> dtos
+rp ..> e
+prs ..> ProcedureExecutor
+ProcedureExecutor ..> DatabaseErrorTranslator
+DatabaseErrorTranslator ..> ApiException
+GlobalExceptionHandler ..> ApiException
+DeadlineScheduler ..> prs
+@enduml

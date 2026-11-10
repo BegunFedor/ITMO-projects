@@ -1,0 +1,33 @@
+@startuml
+!include common.iuml
+skinparam classAttributeIconSize 0
+hide empty members
+package security {
+class AuthInterceptor {
+  +preHandle(request, response, handler) : boolean
+}
+class RequiresRole <<@interface>> {
+  value : UserRole[]
+}
+class Authenticated <<@interface>>
+class CurrentUserArgumentResolver
+class SessionAuthentication {
+  +current(request) : Optional<CurrentUser>
+  +signIn(request, CurrentUser)
+  +signOut(request)
+}
+class "CurrentUser (record)" as CU {
+  id : Long
+  role : UserRole
+}
+class PasswordHasher {
+  +hash(raw) : String
+  +matches(raw, hash) : boolean
+}
+}
+AuthInterceptor --> SessionAuthentication
+AuthInterceptor ..> RequiresRole
+AuthInterceptor ..> Authenticated
+CurrentUserArgumentResolver --> SessionAuthentication
+SessionAuthentication ..> CU
+@enduml

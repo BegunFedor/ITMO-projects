@@ -1,0 +1,31 @@
+@startuml
+!include common.iuml
+left to right direction
+actor "Сотрудник УК\n(исполнитель)" as E
+actor "Администратор УК\n(диспетчер)" as A
+actor "Инспектор ГЖИ" as I
+actor "Планировщик\n(таймер)" as T
+rectangle "ИС обработки обращений жителей МКД" {
+  usecase "Отслеживать обращение\nи оставлять комментарии" as UC2
+  usecase "П3. Выполнить обращение" as UC4
+  usecase "П2. Рассмотреть обращение\nи назначить исполнителя" as UC3
+  usecase "П6. Опубликовать объявление" as UC7
+  usecase "Управлять домами, квартирами,\nсотрудниками, категориями" as UC11
+  usecase "Ответить на предписание" as UC9a
+  usecase "П9. Просматривать статистику" as UC10
+  usecase "П8. Контролировать обращения\nи выдать предписание" as UC9
+  usecase "Выявить просроченные\nобращения" as UC12
+}
+E --> UC2
+E --> UC4
+A --> UC2
+A --> UC3
+A --> UC7
+A --> UC11
+A --> UC9a
+A --> UC10
+I --> UC10
+I --> UC9
+T --> UC12
+UC9 ..> UC12 : <<include>>
+@enduml

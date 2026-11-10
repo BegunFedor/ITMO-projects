@@ -1,0 +1,147 @@
+@startuml
+!include common.iuml
+hide circle
+hide empty members
+skinparam defaultFontSize 12
+skinparam nodesep 30
+skinparam ranksep 40
+entity "request" as request #EEEEEE {
+  * <b>request_id</b> : bigint <<PK>>
+  ..
+}
+entity "app_user" as app_user #EEEEEE {
+  * <b>user_id</b> : bigint <<PK>>
+  ..
+}
+entity "house" as house #EEEEEE {
+  * <b>house_id</b> : bigint <<PK>>
+  ..
+}
+entity "apartment" as apartment #EEEEEE {
+  * <b>apartment_id</b> : bigint <<PK>>
+  ..
+}
+entity "management_company" as management_company #EEEEEE {
+  * <b>company_id</b> : bigint <<PK>>
+  ..
+}
+entity "inspector" as inspector #EEEEEE {
+  * <b>user_id</b> : bigint <<PK,FK>>
+  ..
+}
+entity "request_comment" as request_comment #EEEEEE {
+  * <b>comment_id</b> : bigint <<PK>>
+  ..
+}
+entity "inspection_order" as inspection_order {
+  * <b>order_id</b> : bigint <<PK>>
+  --
+  * number : varchar(30) <<U>>
+  * inspector_id : bigint <<FK>>
+  * company_id : bigint <<FK>>
+  * violation : text
+  * issued_at : timestamptz
+  * due_date : date
+  * status : order_status
+    report_text : text
+    report_at : timestamptz
+    reviewed_at : timestamptz
+    review_comment : text
+}
+entity "order_request" as order_request {
+  * <b>order_id</b> : bigint <<PK,FK>>
+  * <b>request_id</b> : bigint <<PK,FK>>
+  --
+}
+entity "complaint" as complaint {
+  * <b>complaint_id</b> : bigint <<PK>>
+  --
+  * resident_id : bigint <<FK>>
+  * request_id : bigint <<FK,U>>
+  * body : text
+  * status : complaint_status
+    inspector_id : bigint <<FK>>
+    order_id : bigint <<FK>>
+    decision_comment : text
+  * created_at : timestamptz
+    decided_at : timestamptz
+}
+entity "attachment" as attachment {
+  * <b>attachment_id</b> : bigint <<PK>>
+  --
+    request_id : bigint <<FK>>
+    comment_id : bigint <<FK>>
+    order_id : bigint <<FK>>
+  * file_name : varchar(255)
+  * mime_type : varchar(50)
+  * size_bytes : integer
+  * storage_path : varchar(500) <<U>>
+  * uploaded_by : bigint <<FK>>
+  * uploaded_at : timestamptz
+}
+entity "announcement" as announcement {
+  * <b>announcement_id</b> : bigint <<PK>>
+  --
+  * company_id : bigint <<FK>>
+  * author_id : bigint <<FK>>
+  * title : varchar(200)
+  * body : text
+  * visible_from : timestamptz
+    visible_to : timestamptz
+  * created_at : timestamptz
+}
+entity "announcement_house" as announcement_house {
+  * <b>announcement_id</b> : bigint <<PK,FK>>
+  * <b>house_id</b> : bigint <<PK,FK>>
+  --
+}
+entity "meter" as meter {
+  * <b>meter_id</b> : bigint <<PK>>
+  --
+  * apartment_id : bigint <<FK>>
+  * resource : resource_type <<U>>
+  * serial_number : varchar(30) <<U>>
+    verified_until : date
+  * is_active : boolean
+}
+entity "meter_reading" as meter_reading {
+  * <b>reading_id</b> : bigint <<PK>>
+  --
+  * meter_id : bigint <<FK,U>>
+  * reading_date : date <<U>>
+  * value : numeric(12,3)
+    submitted_by : bigint <<FK>>
+  * created_at : timestamptz
+}
+entity "notification" as notification {
+  * <b>notification_id</b> : bigint <<PK>>
+  --
+  * user_id : bigint <<FK>>
+  * event : varchar(30)
+  * entity_type : varchar(20)
+  * entity_id : bigint
+  status : request_status
+  * is_read : boolean
+  * created_at : timestamptz
+}
+inspector ||--o{ inspection_order
+management_company ||--o{ inspection_order
+inspection_order ||--o{ order_request
+request ||--o{ order_request
+app_user ||--o{ complaint
+request ||--o| complaint
+inspector |o--o{ complaint
+inspection_order |o--o{ complaint
+request |o--o{ attachment
+request_comment |o--o{ attachment
+inspection_order |o--o{ attachment
+app_user ||--o{ attachment
+management_company ||--o{ announcement
+app_user ||--o{ announcement
+announcement ||--o{ announcement_house
+house ||--o{ announcement_house
+apartment ||--o{ meter
+meter ||--o| meter_reading
+app_user |o--o{ meter_reading
+app_user ||--o{ notification
+@enduml

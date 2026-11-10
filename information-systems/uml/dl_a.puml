@@ -1,0 +1,166 @@
+@startuml
+!include common.iuml
+hide circle
+hide empty members
+skinparam defaultFontSize 12
+skinparam nodesep 30
+skinparam ranksep 40
+entity "management_company" as management_company {
+  * <b>company_id</b> : bigint <<PK>>
+  --
+  * name : varchar(200)
+  * inn : char(10) <<U>>
+  * address : varchar(300)
+  * dispatch_phone : varchar(20)
+}
+entity "district" as district {
+  * <b>district_id</b> : bigint <<PK>>
+  --
+  * name : varchar(100) <<U>>
+}
+entity "house" as house {
+  * <b>house_id</b> : bigint <<PK>>
+  --
+  * company_id : bigint <<FK>>
+  * district_id : bigint <<FK>>
+  * address : varchar(300) <<U>>
+    build_year : smallint
+  * floors : smallint
+}
+entity "apartment" as apartment {
+  * <b>apartment_id</b> : bigint <<PK>>
+  --
+  * house_id : bigint <<FK,U>>
+  * number : varchar(10) <<U>>
+    entrance : smallint
+    floor : smallint
+    area_m2 : numeric(7,2)
+}
+entity "app_user" as app_user {
+  * <b>user_id</b> : bigint <<PK>>
+  --
+  * login : varchar(50) <<U>>
+  * password_hash : varchar(200)
+  * full_name : varchar(150)
+    phone : varchar(20)
+    email : varchar(100)
+  * role : user_role
+  * is_active : boolean
+  * created_at : timestamptz
+}
+entity "resident_apartment" as resident_apartment {
+  * <b>user_id</b> : bigint <<PK,FK>>
+  * <b>apartment_id</b> : bigint <<PK,FK>>
+  --
+  * ownership : ownership_type
+  * is_confirmed : boolean
+  * linked_at : timestamptz
+}
+entity "company_staff" as company_staff {
+  * <b>user_id</b> : bigint <<PK,FK>>
+  --
+  * company_id : bigint <<FK>>
+  * position : varchar(100)
+}
+entity "specialization" as specialization {
+  * <b>specialization_id</b> : bigint <<PK>>
+  --
+  * name : varchar(100) <<U>>
+}
+entity "staff_specialization" as staff_specialization {
+  * <b>user_id</b> : bigint <<PK,FK>>
+  * <b>specialization_id</b> : bigint <<PK,FK>>
+  --
+}
+entity "inspector" as inspector {
+  * <b>user_id</b> : bigint <<PK,FK>>
+  --
+  * district_id : bigint <<FK>>
+  * service_number : varchar(20) <<U>>
+}
+entity "request_category" as request_category {
+  * <b>category_id</b> : bigint <<PK>>
+  --
+  * name : varchar(100) <<U>>
+  * specialization_id : bigint <<FK>>
+  * norm_hours : integer
+  * is_emergency : boolean
+  * is_active : boolean
+}
+entity "status_transition" as status_transition {
+  * <b>from_status</b> : request_status <<PK>>
+  * <b>to_status</b> : request_status <<PK>>
+  * <b>actor_role</b> : varchar(20) <<PK>>
+  --
+}
+entity "request" as request {
+  * <b>request_id</b> : bigint <<PK>>
+  --
+  * author_id : bigint <<FK>>
+  * house_id : bigint <<FK>>
+    apartment_id : bigint <<FK>>
+    previous_request_id : bigint <<FK>>
+  * category_id : bigint <<FK>>
+  * description : text
+    executor_id : bigint <<FK>>
+    result_text : text
+  * created_at : timestamptz
+  * deadline_at : timestamptz
+  * is_overdue : boolean
+  * updated_at : timestamptz
+  * version : integer
+}
+entity "request_status_history" as request_status_history {
+  * <b>history_id</b> : bigint <<PK>>
+  --
+  * request_id : bigint <<FK>>
+  * status : request_status
+    changed_by : bigint <<FK>>
+  * changed_at : timestamptz
+    comment : text
+}
+entity "request_comment" as request_comment {
+  * <b>comment_id</b> : bigint <<PK>>
+  --
+  * request_id : bigint <<FK>>
+  * author_id : bigint <<FK>>
+  * body : text
+  * created_at : timestamptz
+}
+entity "rating" as rating {
+  * <b>request_id</b> : bigint <<PK,FK>>
+  --
+  * score : smallint
+    review : text
+  * created_at : timestamptz
+}
+management_company ||--o{ house
+district ||--o{ house
+house ||--o| apartment
+app_user ||--o{ resident_apartment
+apartment ||--o{ resident_apartment
+app_user ||--o| company_staff
+management_company ||--o{ company_staff
+company_staff ||--o{ staff_specialization
+specialization ||--o{ staff_specialization
+app_user ||--o| inspector
+district ||--o{ inspector
+specialization ||--o{ request_category
+app_user ||--o{ request
+house ||--o{ request
+apartment |o--o{ request
+request |o--o{ request
+request_category ||--o{ request
+app_user |o--o{ request
+request ||--o{ request_status_history
+app_user |o--o{ request_status_history
+request ||--o{ request_comment
+app_user ||--o{ request_comment
+request ||--o| rating
+note bottom of request_status_history
+  changed_at — время перехода в статус status:
+  status = DONE → время выполнения обращения,
+  status = CLOSED / CANCELLED → время закрытия.
+  Текущий статус — запись с наибольшим history_id.
+end note
+@enduml

@@ -1,0 +1,81 @@
+@startuml
+!include common.iuml
+skinparam classAttributeIconSize 0
+hide empty members
+left to right direction
+package procedure {
+class ProcedureExecutor {
+  -jdbc : JdbcTemplate
+  -translator : DatabaseErrorTranslator
+  +call(sql, args)
+  +queryForLong(sql, args) : Long
+  +queryForInt(sql, args) : int
+  +query(sql, mapper, args) : List<T>
+  +bigintArray(ids) : Array
+}
+class AccountProcedures {
+  +registerResident(...) : Long
+  +confirmResident(admin, user, apt)
+}
+class RequestProcedures {
+  +createRequest(...) : Long
+  +cancelRequest(req, user, reason)
+  +addComment(req, author, body) : Long
+}
+class DispatchProcedures {
+  +acceptRequest(req, admin)
+  +suggestExecutors(req) : List<ExecutorCandidate>
+  +assignExecutor(req, admin, exec, comment)
+}
+class WorkProcedures {
+  +startWork(req, employee)
+  +completeRequest(req, employee, result)
+}
+class ResultProcedures {
+  +rateRequest(req, user, score, review)
+  +rejectResult(req, user, reason)
+}
+class MeterProcedures {
+  +submitReading(meter, user, value)
+}
+class AnnouncementProcedures {
+  +publish(...) : Long
+}
+class ComplaintProcedures {
+  +fileComplaint(user, req, body) : Long
+  +rejectComplaint(insp, compl, reason)
+}
+class InspectionProcedures {
+  +overdueRequests(insp) : List<OverdueRequestRow>
+  +issueOrder(...) : Long
+  +submitOrderReport(order, admin, text)
+  +reviewOrder(order, insp, accepted, comment)
+}
+class SchedulerProcedures {
+  +markOverdueRequests() : int
+  +autoCloseUnrated(days) : int
+  +markOverdueOrders() : int
+}
+}
+AccountProcedures --> ProcedureExecutor
+RequestProcedures --> ProcedureExecutor
+DispatchProcedures --> ProcedureExecutor
+WorkProcedures --> ProcedureExecutor
+ResultProcedures --> ProcedureExecutor
+MeterProcedures --> ProcedureExecutor
+AnnouncementProcedures --> ProcedureExecutor
+ComplaintProcedures --> ProcedureExecutor
+InspectionProcedures --> ProcedureExecutor
+SchedulerProcedures --> ProcedureExecutor
+package exception {
+class DatabaseErrorTranslator {
+  +translate(e : DataAccessException) : ApiException
+}
+abstract class ApiException {
+  -code : String
+  +getStatus() : HttpStatus
+}
+}
+ProcedureExecutor --> DatabaseErrorTranslator
+DatabaseErrorTranslator ..> ApiException
+@enduml

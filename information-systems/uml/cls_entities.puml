@@ -1,0 +1,87 @@
+@startuml
+!include common.iuml
+skinparam classAttributeIconSize 0
+hide empty methods
+package entity {
+class Request <<@Entity, @Immutable\nview v_request>> {
+  id : Long
+  description : String
+  status : RequestStatus
+  statusChangedAt : OffsetDateTime
+  previousRequestId : Long
+  resultText : String
+  createdAt, deadlineAt : OffsetDateTime
+  overdue : boolean
+  version : int <<@Version>>
+}
+class AppUser {
+  id : Long
+  login : String
+  fullName : String
+  role : UserRole
+  active : boolean
+}
+class House {
+  id : Long
+  address : String
+}
+class Apartment {
+  id : Long
+  number : String
+}
+class ManagementCompany
+class District
+class RequestCategory {
+  name : String
+  normHours : int
+  emergency : boolean
+}
+class RequestStatusHistory {
+  requestId : Long
+  status : RequestStatus
+  changedAt : OffsetDateTime
+  comment : String
+}
+class RequestComment
+class Rating
+class Complaint
+class InspectionOrder
+class Notification <<@Entity>> {
+  event : NotificationEvent
+  entityType : NotificationTarget
+  entityId : Long
+  status : RequestStatus
+  read : boolean
+}
+}
+Request --> "1" AppUser : author
+Request --> "0..1" AppUser : executor
+Request --> "1" House
+Request --> "0..1" Apartment
+Request --> "1" RequestCategory
+House --> ManagementCompany
+House --> District
+Apartment --> House
+RequestStatusHistory ..> Request : requestId
+RequestComment ..> Request : requestId
+Rating ..> Request : requestId
+Complaint --> Request
+InspectionOrder --> "*" Request : requests
+InspectionOrder --> ManagementCompany
+package repository {
+interface RequestRepository {
+  +findByAuthor(userId) : List<Request>
+  +findByCompanyAndStatuses(company, statuses)
+  +findByExecutorAndStatuses(executor, statuses)
+  +findCard(id) : Optional<Request>
+}
+interface NotificationRepository {
+  +findByUserIdOrderByCreatedAtDescIdDesc(user, page)
+  +countByUserIdAndReadFalse(user) : long
+  +markAllRead(user) : int
+}
+interface "Другие репозитории (18)" as Other
+}
+RequestRepository ..> Request
+NotificationRepository ..> Notification
+@enduml

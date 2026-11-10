@@ -1,0 +1,33 @@
+@startuml
+!include common.iuml
+skinparam classAttributeIconSize 0
+hide empty members
+package web {
+class AuthController <</api/auth>>
+class ReferenceController <</api/reference>>
+class ResidentRequestController <</api/resident/requests>> {
+  +list(user)
+  +create(user, CreateRequestDto) : CreatedDto
+  +cancel(user, id, ReasonDto)
+  +rate(user, id, RateDto)
+  +rejectResult(user, id, ReasonDto)
+}
+class RequestCardController <</api/requests/{id}>> {
+  +card(user, id) : RequestCardDto
+  +comment(user, id, NewCommentDto)
+}
+class DispatchController <</api/dispatch/requests>>
+class WorkController <</api/work/tasks>>
+class InspectionController <</api/inspection>>
+class "MeterController, AnnouncementController,\nComplaintController, OrderReportController,\nResidentConfirmationController,\nNotificationController" as Others
+}
+package exception {
+class GlobalExceptionHandler <<@RestControllerAdvice>> {
+  +handleApi(ApiException) : ErrorResponse
+  +handleValidation(...) : ErrorResponse
+}
+}
+AuthController -[hidden]down-> InspectionController
+WorkController -[hidden]down-> Others
+ResidentRequestController -[hidden]down-> GlobalExceptionHandler
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+!include common.iuml
+left to right direction
+skinparam packageStyle rectangle
+actor "Житель" as R
+actor "Сотрудник УК\n(исполнитель)" as E
+actor "Администратор УК\n(диспетчер)" as A
+actor "Инспектор ГЖИ" as I
+actor "Планировщик\n(таймер)" as T
+
+rectangle "ИС обработки обращений жителей МКД" {
+  usecase "П1. Создать обращение" as UC1
+  usecase "Повторное обращение" as UC5a
+  usecase "Отслеживать обращение\nи оставлять комментарии" as UC2
+  usecase "П2. Рассмотреть обращение\nи назначить исполнителя" as UC3
+  usecase "П3. Выполнить обращение" as UC4
+  usecase "П4. Принять работу с оценкой /\nотклонить результат" as UC5
+  usecase "П5. Передать показания\nприборов учёта" as UC6
+  usecase "П6. Опубликовать объявление" as UC7
+  usecase "Просматривать объявления" as UC7a
+  usecase "П7. Подать жалобу в ГЖИ" as UC8
+  usecase "П8. Контролировать обращения\nи выдать предписание" as UC9
+  usecase "Ответить на предписание" as UC9a
+  usecase "П9. Зарегистрироваться\nи подтвердить привязку\nк квартире" as UC10
+  usecase "Выявить просроченные\nобращения" as UC12
+}
+R --> UC1
+R --> UC2
+R --> UC5
+UC5 <.. UC5a : <<extend>>
+R --> UC6
+R --> UC7a
+R --> UC8
+R --> UC10
+UC2 <-- E
+UC4 <-- E
+UC3 <-- A
+UC7 <-- A
+UC9a <-- A
+UC10 <-- A
+UC9 <-- I
+UC12 <-- T
+UC9 ..> UC12 : <<include>>
+@enduml
