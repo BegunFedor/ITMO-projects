@@ -1,0 +1,290 @@
+#include "types.h"
+#include "param.h"
+#include "memlayout.h"
+#include "riscv.h"
+#include "spinlock.h"
+#include "proc.h"
+#include "defs.h"
+#include "elf.h"
+
+static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
+
+// Shebang: if a file starts with "#!interpreter [optional-arg]\n",
+// exec runs the interpreter and passes it the script path.
+#define SHEBANG_MAXLINE  MAXPATH // longest "#!..." line we accept (bytes)
+#define SHEBANG_MAXDEPTH 4       // interpreter may itself be a script
+
+// One page of kernel memory used to build the rewritten argv:
+// two argv arrays (we alternate between them when scripts are nested)
+// and a buffer for the strings they point to.
+struct shebang_buf {
+  char *argv[2][MAXARG + 1];
+  char strs[PGSIZE - 2 * (MAXARG + 1) * sizeof(char *)];
+};
+
+// Copy n+1 bytes of s into the string area and return the copy.
+// Returns 0 if the area is full.
+static char *
+sb_put(struct shebang_buf *sb, int *used, char *s, int n)
+{
+  if (*used + n + 1 > sizeof(sb->strs))
+    return 0;
+  char *dst = sb->strs + *used;
+  memmove(dst, s, n);
+  dst[n] = 0;
+  *used += n + 1;
+  return dst;
+}
+
+// Parse the first line of a script (hdr, n bytes read from offset 0).
+// Fills interp/arg (arg may be empty). Returns 0 on success, -1 if the
+// line is malformed or does not fit.
+static int
+shebang_parse(char *hdr, int n, char *interp, char *arg)
+{
+  int i = 2, j;
+
+  while (i < n && (hdr[i] == ' ' || hdr[i] == '\t'))
+    i++;
+  for (j = 0; i < n && hdr[i] != ' ' && hdr[i] != '\t' && hdr[i] != '\n';
+       i++, j++)
+    interp[j] = hdr[i];
+  interp[j] = 0;
+  if (j == 0)
+    return -1; // "#!" without an interpreter
+
+  while (i < n && (hdr[i] == ' ' || hdr[i] == '\t'))
+    i++;
+  for (j = 0; i < n && hdr[i] != '\n'; i++, j++)
+    arg[j] = hdr[i];
+  while (j > 0 &&
+         (arg[j - 1] == ' ' || arg[j - 1] == '\t' || arg[j - 1] == '\r'))
+    j--; // trim trailing blanks
+  arg[j] = 0;
+
+  if (i >= n && n == SHEBANG_MAXLINE)
+    return -1; // no newline within the first SHEBANG_MAXLINE bytes
+  return 0;
+}
+
+// map ELF permissions to PTE permission bits.
+int
+flags2perm(int flags)
+{
+  int perm = 0;
+  if (flags & 0x1)
+    perm = PTE_X;
+  if (flags & 0x2)
+    perm |= PTE_W;
+  return perm;
+}
+
+//
+// the implementation of the exec() system call
+//
+int
+kexec(char *path, char **argv)
+{
+  char *s, *last;
+  int i, off;
+  uint64 argc, sz = 0, sp, ustack[MAXARG], stackbase;
+  struct elfhdr elf;
+  struct inode *ip;
+  struct proghdr ph;
+  pagetable_t pagetable = 0, oldpagetable;
+  struct proc *p = myproc();
+  struct shebang_buf *sb = 0; // allocated on the first "#!"
+  int depth = 0, sbused = 0;
+  char hdr[SHEBANG_MAXLINE];
+
+again:
+  begin_op();
+
+  // Open the executable file.
+  if ((ip = namei(path)) == 0) {
+    end_op();
+    if (sb)
+      kfree(sb);
+    return -1;
+  }
+  ilock(ip);
+
+  // Is it a script ("#!interpreter [arg]")?
+  int hn = readi(ip, 0, (uint64)hdr, 0, sizeof(hdr));
+  if (hn >= 2 && hdr[0] == '#' && hdr[1] == '!') {
+    char interp[SHEBANG_MAXLINE], arg[SHEBANG_MAXLINE];
+    char **nargv;
+    char *spath, *sinterp, *sarg = 0;
+    int ac = 0, k;
+
+    if (depth >= SHEBANG_MAXDEPTH)
+      goto bad;
+    if (shebang_parse(hdr, hn, interp, arg) < 0)
+      goto bad;
+    if (sb == 0 && (sb = kalloc()) == 0)
+      goto bad;
+
+    // New argv: interpreter, [its argument], script path, old argv[1..].
+    // The old argv[0] is dropped: the script path replaces it.
+    nargv = sb->argv[depth % 2];
+    spath = sb_put(sb, &sbused, path, strlen(path));
+    sinterp = sb_put(sb, &sbused, interp, strlen(interp));
+    if (arg[0])
+      sarg = sb_put(sb, &sbused, arg, strlen(arg));
+    if (spath == 0 || sinterp == 0 || (arg[0] && sarg == 0))
+      goto bad;
+
+    nargv[ac++] = sinterp;
+    if (sarg)
+      nargv[ac++] = sarg;
+    nargv[ac++] = spath;
+    for (k = 1; argv[0] && argv[k]; k++) {
+      if (ac >= MAXARG - 1) // keep room for the terminating 0
+        goto bad;
+      nargv[ac++] = argv[k];
+    }
+    nargv[ac] = 0;
+
+    iunlockput(ip);
+    end_op();
+    ip = 0;
+
+    path = sinterp;
+    argv = nargv;
+    depth++;
+    goto again;
+  }
+
+  // Read the ELF header.
+  if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf))
+    goto bad;
+
+  // Is this really an ELF file?
+  if (elf.magic != ELF_MAGIC)
+    goto bad;
+
+  if ((pagetable = proc_pagetable(p)) == 0)
+    goto bad;
+
+  // Load program into memory.
+  for (i = 0, off = elf.phoff; i < elf.phnum; i++, off += sizeof(ph)) {
+    if (readi(ip, 0, (uint64)&ph, off, sizeof(ph)) != sizeof(ph))
+      goto bad;
+    if (ph.type != ELF_PROG_LOAD)
+      continue;
+    if (ph.memsz < ph.filesz)
+      goto bad;
+    if (ph.vaddr + ph.memsz < ph.vaddr)
+      goto bad;
+    if (ph.vaddr % PGSIZE != 0)
+      goto bad;
+    uint64 sz1;
+    if ((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz,
+                        flags2perm(ph.flags))) == 0)
+      goto bad;
+    sz = sz1;
+    if (loadseg(pagetable, ph.vaddr, ip, ph.off, ph.filesz) < 0)
+      goto bad;
+  }
+  iunlockput(ip);
+  end_op();
+  ip = 0;
+
+  p = myproc();
+  uint64 oldsz = p->sz;
+
+  // Allocate some pages at the next page boundary.
+  // Make the first inaccessible as a stack guard.
+  // Use the rest as the user stack.
+  sz = PGROUNDUP(sz);
+  uint64 sz1;
+  if ((sz1 = uvmalloc(pagetable, sz, sz + (USERSTACK + 1) * PGSIZE, PTE_W)) ==
+      0)
+    goto bad;
+  sz = sz1;
+  uvmclear(pagetable, sz - (USERSTACK + 1) * PGSIZE);
+  sp = sz;
+  stackbase = sp - USERSTACK * PGSIZE;
+
+  // Copy argument strings into new stack, remember their
+  // addresses in ustack[].
+  for (argc = 0; argv[argc]; argc++) {
+    sp -= strlen(argv[argc]) + 1;
+    sp -= sp % 16; // riscv sp must be 16-byte aligned
+    if (sp < stackbase)
+      goto bad;
+    if (copyout(pagetable, sz, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
+      goto bad;
+    ustack[argc] = sp;
+  }
+  ustack[argc] = 0;
+
+  // push a copy of ustack[], the array of argv[] pointers.
+  sp -= (argc + 1) * sizeof(uint64);
+  sp -= sp % 16;
+  if (sp < stackbase)
+    goto bad;
+  if (copyout(pagetable, sz, sp, (char *)ustack, (argc + 1) * sizeof(uint64)) <
+      0)
+    goto bad;
+
+  // a0 and a1 contain arguments to user main(argc, argv)
+  // argc is returned via the system call return
+  // value, which goes in a0.
+  p->trapframe->a1 = sp;
+
+  // Save program name for debugging.
+  for (last = s = path; *s; s++)
+    if (*s == '/')
+      last = s + 1;
+  safestrcpy(p->name, last, sizeof(p->name));
+
+  // Commit to the user image.
+  oldpagetable = p->pagetable;
+  p->pagetable = pagetable;
+  p->sz = sz;
+  p->trapframe->epc = elf.entry; // initial program counter = ulib.c:start()
+  p->trapframe->sp = sp;         // initial stack pointer
+  proc_freepagetable(oldpagetable, oldsz);
+
+  if (sb)
+    kfree(sb);
+  return argc; // this ends up in a0, the first argument to main(argc, argv)
+
+bad:
+  if (pagetable)
+    proc_freepagetable(pagetable, sz);
+  if (ip) {
+    iunlockput(ip);
+    end_op();
+  }
+  if (sb)
+    kfree(sb);
+  return -1;
+}
+
+// Load an ELF program segment into pagetable at virtual address va.
+// va must be page-aligned
+// and the pages from va to va+sz must already be mapped.
+// Returns 0 on success, -1 on failure.
+static int
+loadseg(pagetable_t pagetable, uint64 va, struct inode *ip, uint offset,
+        uint sz)
+{
+  uint i, n;
+  uint64 pa;
+
+  for (i = 0; i < sz; i += PGSIZE) {
+    pa = walkaddr(pagetable, va + i);
+    if (pa == 0)
+      panic("loadseg: address should exist");
+    if (sz - i < PGSIZE)
+      n = sz - i;
+    else
+      n = PGSIZE;
+    if (readi(ip, 0, (uint64)pa, offset + i, n) != n)
+      return -1;
+  }
+
+  return 0;
+}
